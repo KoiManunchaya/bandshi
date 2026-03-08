@@ -1,14 +1,15 @@
 <?php
 
-$host = "localhost";
-$user = "root";
-$pass = "root";   // ถ้า MAMP บางเครื่องใช้ root
-$db   = "bandshi_db";
-
-$conn = new mysqli($host, $user, $pass, $db);
+$conn = new mysqli(
+    $_ENV['MYSQLHOST'],
+    $_ENV['MYSQLUSER'],
+    $_ENV['MYSQLPASSWORD'],
+    $_ENV['MYSQLDATABASE'],
+    $_ENV['MYSQLPORT']
+);
 
 if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
 }
 
 $conn->set_charset("utf8mb4");
