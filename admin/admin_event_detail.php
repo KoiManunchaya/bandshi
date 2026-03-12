@@ -9,18 +9,32 @@ if (!$event_id) {
 }
 
 /* =====================
-   CLOSE JOIN
+   DELETE EVENT
 ===================== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['close_join'])) {
-  $stmt = $conn->prepare("
-    UPDATE events
-    SET status = 'closed'
-    WHERE id = ?
-  ");
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_event'])) {
+
+  $stmt = $conn->prepare("DELETE FROM events WHERE id = ?");
   $stmt->bind_param("i", $event_id);
   $stmt->execute();
 
-  header("Location: admin_event_detail.php?id=" . $event_id);
+  header("Location: admin_events.php");
+  exit();
+}
+
+/* =====================
+   CLOSE JOIN
+===================== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['close_join'])) {
+
+  $stmt = $conn->prepare("
+    UPDATE events
+    SET status='closed'
+    WHERE id=?
+  ");
+  $stmt->bind_param("i",$event_id);
+  $stmt->execute();
+
+  header("Location: admin_event_detail.php?id=".$event_id);
   exit();
 }
 
@@ -28,86 +42,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['close_join'])) {
    REOPEN JOIN
 ===================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reopen_join'])) {
+
   $stmt = $conn->prepare("
     UPDATE events
-    SET status = 'open'
-    WHERE id = ?
+    SET status='open'
+    WHERE id=?
   ");
-  $stmt->bind_param("i", $event_id);
+  $stmt->bind_param("i",$event_id);
   $stmt->execute();
 
-  header("Location: admin_event_detail.php?id=" . $event_id);
+  header("Location: admin_event_detail.php?id=".$event_id);
+  exit();
+}
+
+/* =====================
+   UPDATE EVENT INFO
+===================== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_event'])) {
+
+  $title      = $_POST['title'];
+  $event_date = $_POST['event_date'];
+  $start_time = $_POST['start_time'];
+  $end_time   = $_POST['end_time'];
+  $location   = $_POST['location'];
+
+  $stmt = $conn->prepare("
+    UPDATE events
+    SET title=?, event_date=?, start_time=?, end_time=?, location=?
+    WHERE id=?
+  ");
+
+  $stmt->bind_param(
+    "sssssi",
+    $title,
+    $event_date,
+    $start_time,
+    $end_time,
+    $location,
+    $event_id
+  );
+
+  $stmt->execute();
+
+  header("Location: admin_event_detail.php?id=".$event_id);
   exit();
 }
 
 /* =====================
    FETCH EVENT
 ===================== */
-$stmt = $conn->prepare("SELECT * FROM events WHERE id = ?");
-$stmt->bind_param("i", $event_id);
+$stmt = $conn->prepare("SELECT * FROM events WHERE id=?");
+$stmt->bind_param("i",$event_id);
 $stmt->execute();
+
 $event = $stmt->get_result()->fetch_assoc();
 
-if (!$event) {
-  die('Event not found');
+if(!$event){
+  die("Event not found");
 }
 
 /* =====================
    FETCH JOINED MEMBERS
 ===================== */
 $stmt = $conn->prepare("
-  SELECT u.full_name, u.part, u.instrument
-  FROM event_members em
-  JOIN users u ON em.user_id = u.id
-  WHERE em.event_id = ?
-  ORDER BY u.full_name
+  SELECT u.display_name, u.part, u.instrument
+  FROM event_join ej
+  JOIN users u ON ej.user_id = u.id
+  WHERE ej.event_id = ?
+  ORDER BY u.display_name
 ");
-$stmt->bind_param("i", $event_id);
+
+$stmt->bind_param("i",$event_id);
 $stmt->execute();
+
 $members = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Event Detail | Admin</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-body {
-  background:#1f232a;
-  color:#ffffff;
+
+body{
+background:#1f232a;
+color:#ffffff;
 }
 
-h2, h5, p, li, span {
-  color:#ffffff !important;
+h2,h5,p,li,label{
+color:#ffffff;
 }
 
-.text-secondary {
-  color:#ffffff !important;
-  opacity:0.75;
-}
-
-.card-dark {
-  background:#2b2f36;
-  border-radius:16px;
+.card-dark{
+background:#2b2f36;
+border-radius:16px;
 }
 
 .alert-warning,
-.alert-success {
-  background:#3a3f47;
-  border:none;
-  color:#ffffff;
+.alert-success{
+background:#3a3f47;
+border:none;
+color:#ffffff;
 }
 
-ul {
-  list-style:none;
-  padding-left:0;
+ul{
+list-style:none;
+padding-left:0;
 }
 
-li {
-  padding:6px 0;
+li{
+padding:6px 0;
 }
+
+.form-control{
+background:#1f232a;
+border:1px solid #444;
+color:#fff;
+}
+
 </style>
 </head>
 
@@ -115,78 +170,182 @@ li {
 
 <div class="container py-5">
 
-  <a href="admin_events.php" class="btn btn-outline-light mb-4">
-    ← Back
-  </a>
+<a href="admin_events.php" class="btn btn-outline-light mb-4">
+← Back
+</a>
 
-  <h2><?= htmlspecialchars($event['title']) ?></h2>
-  <p class="text-secondary mb-4">
-    <?= htmlspecialchars($event['event_date']) ?>
-    <?php if ($event['start_time'] && $event['end_time']): ?>
-      | <?= $event['start_time'] ?>–<?= $event['end_time'] ?>
-    <?php endif; ?>
-    <br>
-    <?= htmlspecialchars($event['location']) ?>
-  </p>
+<!-- EDIT EVENT -->
 
-  <!-- JOINED MEMBERS -->
-  <div class="card card-dark p-4 mb-4">
-    <h5>Joined Members (<?= count($members) ?>)</h5>
+<div class="card card-dark p-4 mb-4">
 
-    <?php if (empty($members)): ?>
-      <p>No members joined yet.</p>
-    <?php else: ?>
-      <ul class="mb-0">
-        <?php foreach ($members as $m): ?>
-          <li>
-            <?= htmlspecialchars($m['full_name']) ?>
-            (<?= htmlspecialchars($m['part']) ?>
-            <?= $m['instrument'] !== 'none' ? ' / ' . htmlspecialchars($m['instrument']) : '' ?>)
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    <?php endif; ?>
-  </div>
+<h5 class="mb-3">Edit Event</h5>
 
-  <!-- STATUS -->
-  <div class="card card-dark p-4">
-    <h5>Status</h5>
+<form method="post">
 
-    <?php if ($event['status'] === 'open'): ?>
+<div class="row g-3">
 
-      <div class="alert alert-warning">
-        Event is open for join
-      </div>
+<div class="col-12">
+<label>Title</label>
+<input
+class="form-control"
+name="title"
+value="<?= htmlspecialchars($event['title']) ?>"
+required>
+</div>
 
-      <form method="post">
-        <button name="close_join"
-                class="btn btn-warning"
-                onclick="return confirm('Are you sure you want to close joining?')">
-          Close Join
-        </button>
-      </form>
+<div class="col-md-4">
+<label>Date</label>
+<input
+type="date"
+class="form-control"
+name="event_date"
+value="<?= $event['event_date'] ?>"
+required>
+</div>
 
-    <?php else: ?>
+<div class="col-md-4">
+<label>Start Time</label>
+<input
+type="time"
+class="form-control"
+name="start_time"
+value="<?= $event['start_time'] ?>">
+</div>
 
-      <div class="alert alert-success">
-        Join closed — ready for song assignment
-      </div>
+<div class="col-md-4">
+<label>End Time</label>
+<input
+type="time"
+class="form-control"
+name="end_time"
+value="<?= $event['end_time'] ?>">
+</div>
 
-      <form method="post" class="d-inline me-2">
-        <button name="reopen_join"
-                class="btn btn-outline-light"
-                onclick="return confirm('Reopen joining for this event?')">
-          Reopen Join
-        </button>
-      </form>
+<div class="col-12">
+<label>Location</label>
+<input
+class="form-control"
+name="location"
+value="<?= htmlspecialchars($event['location']) ?>"
+required>
+</div>
 
-      <a href="admin_songs.php?event_id=<?= $event_id ?>"
-         class="btn btn-success">
-        Manage Songs
-      </a>
+<div class="col-12 d-flex justify-content-between mt-2">
 
-    <?php endif; ?>
-  </div>
+<button
+name="update_event"
+class="btn btn-primary">
+Save Changes
+</button>
+
+<button
+name="delete_event"
+class="btn btn-danger"
+onclick="return confirm('Delete this event?')">
+Delete Event
+</button>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+<!-- JOINED MEMBERS -->
+
+<div class="card card-dark p-4 mb-4">
+
+<h5>Joined Members (<?= count($members) ?>)</h5>
+
+<?php if(empty($members)): ?>
+
+<p>No members joined yet.</p>
+
+<?php else: ?>
+
+<ul>
+
+<?php foreach($members as $m): ?>
+
+<li>
+
+<?= htmlspecialchars($m['display_name']) ?>
+
+(<?= htmlspecialchars($m['part']) ?>
+
+<?= $m['instrument'] !== 'none' ? ' / '.htmlspecialchars($m['instrument']) : '' ?>)
+
+</li>
+
+<?php endforeach; ?>
+
+</ul>
+
+<?php endif; ?>
+
+</div>
+
+<!-- STATUS -->
+
+<div class="card card-dark p-4">
+
+<h5>Status</h5>
+
+<?php if($event['status']==='open'): ?>
+
+<div class="alert alert-warning mb-3">
+Event is open for join
+</div>
+
+<div class="d-flex gap-2">
+
+<form method="post">
+<button
+name="close_join"
+class="btn btn-warning"
+onclick="return confirm('Close joining for this event?')">
+Close Join
+</button>
+</form>
+
+<a
+href="admin_songs.php?event_id=<?= $event_id ?>"
+class="btn btn-success">
+Manage Songs
+</a>
+
+</div>
+
+<?php else: ?>
+
+<div class="alert alert-success mb-3">
+Join closed — ready for song assignment
+</div>
+
+<div class="d-flex gap-2">
+
+<form method="post">
+<button
+name="reopen_join"
+class="btn btn-outline-light"
+onclick="return confirm('Reopen joining?')">
+Reopen Join
+</button>
+</form>
+
+<a
+href="admin_songs.php?event_id=<?= $event_id ?>"
+class="btn btn-success">
+Manage Songs
+</a>
+
+</div>
+
+<?php endif; ?>
+
+</div>
 
 </div>
 

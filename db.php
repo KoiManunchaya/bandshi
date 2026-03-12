@@ -1,12 +1,12 @@
 <?php
 
-$conn = new mysqli(
-    $_ENV['MYSQLHOST'],
-    $_ENV['MYSQLUSER'],
-    $_ENV['MYSQLPASSWORD'],
-    $_ENV['MYSQLDATABASE'],
-    $_ENV['MYSQLPORT']
-);
+$host = $_ENV['MYSQLHOST'] ?? 'localhost';
+$user = $_ENV['MYSQLUSER'] ?? 'root';
+$pass = $_ENV['MYSQLPASSWORD'] ?? 'root';
+$db   = $_ENV['MYSQLDATABASE'] ?? 'bandshi_db';
+$port = $_ENV['MYSQLPORT'] ?? 8889;
+
+$conn = new mysqli($host, $user, $pass, $db, $port);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);

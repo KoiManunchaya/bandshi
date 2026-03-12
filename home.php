@@ -3,10 +3,11 @@ session_start();
 require_once 'db.php';
 require_once 'auth.php';
 
-/* events เรียงตามวันเล่น ใกล้สุดก่อน */
+/* แสดงเฉพาะ event ที่ยังเปิดอยู่ */
 $events = $conn->query("
   SELECT id, title, event_date, start_time, location
   FROM events
+  WHERE status = 'open'
   ORDER BY event_date ASC
   LIMIT 6
 ")->fetch_all(MYSQLI_ASSOC);

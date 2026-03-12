@@ -8,12 +8,18 @@ $event_id = intval($_GET['id'] ?? 0);
 
 if (!$event_id) die("Invalid event");
 
+/* ===== GET EVENT ===== */
 $stmt = $conn->prepare("SELECT * FROM events WHERE id = ?");
 $stmt->bind_param("i", $event_id);
 $stmt->execute();
 $event = $stmt->get_result()->fetch_assoc();
+
 if (!$event) die("Event not found");
 
+/* ===== CHECK STATUS ===== */
+$isClosed = ($event['status'] === 'closed');
+
+/* ===== CHECK JOIN ===== */
 $stmt = $conn->prepare("
   SELECT id FROM event_join
   WHERE user_id = ? AND event_id = ?
@@ -22,31 +28,35 @@ $stmt->bind_param("ii", $user_id, $event_id);
 $stmt->execute();
 $is_joined = $stmt->get_result()->num_rows > 0;
 
+/* ===== JOIN / UNJOIN ===== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-  if (isset($_POST['join']) && !$is_joined) {
+  if (isset($_POST['join']) && !$is_joined && !$isClosed) {
     $stmt = $conn->prepare("
       INSERT INTO event_join (user_id, event_id)
       VALUES (?, ?)
     ");
     $stmt->bind_param("ii", $user_id, $event_id);
     $stmt->execute();
+
     header("Location: event_detail.php?id=$event_id");
     exit;
   }
 
-  if (isset($_POST['unjoin']) && $is_joined) {
+  if (isset($_POST['unjoin']) && $is_joined && !$isClosed) {
     $stmt = $conn->prepare("
       DELETE FROM event_join
       WHERE user_id = ? AND event_id = ?
     ");
     $stmt->bind_param("ii", $user_id, $event_id);
     $stmt->execute();
+
     header("Location: event_detail.php?id=$event_id");
     exit;
   }
 }
 
+/* ===== COUNT MEMBERS ===== */
 $stmt = $conn->prepare("
   SELECT COUNT(*) AS total
   FROM event_join
@@ -56,6 +66,7 @@ $stmt->bind_param("i", $event_id);
 $stmt->execute();
 $count = $stmt->get_result()->fetch_assoc()['total'];
 
+/* ===== MEMBER LIST ===== */
 $members = $conn->query("
   SELECT u.display_name, u.profile_pic
   FROM event_join ej

@@ -46,19 +46,23 @@ $sql = "
 SELECT e.*,
        CASE WHEN ej.user_id IS NULL THEN 0 ELSE 1 END AS joined
 FROM events e
-LEFT JOIN event_join ej 
-  ON e.id = ej.event_id 
-  AND ej.user_id = $user_id
+LEFT JOIN event_join ej
+ON e.id = ej.event_id AND ej.user_id = $user_id
 ";
 
 if ($filter === 'not_joined') {
-    $sql .= " WHERE ej.user_id IS NULL AND e.event_date >= '$today'";
+    $sql .= " WHERE ej.user_id IS NULL
+              AND e.status='open'
+              AND e.event_date >= '$today'";
 }
 elseif ($filter === 'joined') {
-    $sql .= " WHERE ej.user_id IS NOT NULL AND e.event_date >= '$today'";
+    $sql .= " WHERE ej.user_id IS NOT NULL
+              AND e.status='open'
+              AND e.event_date >= '$today'";
 }
 elseif ($filter === 'finished') {
-    $sql .= " WHERE e.event_date < '$today'";
+    $sql .= " WHERE e.status='closed'
+              OR e.event_date < '$today'";
 }
 
 $sql .= "
@@ -120,13 +124,13 @@ body{
   transform:translateY(-4px);
 }
 
-/* JOINED STYLE (ฟ้า theme) */
+/* JOINED STYLE */
 .joined-card{
   background:linear-gradient(135deg,#081f26,#0b2f3a);
   border:1px solid #00c2ff;
 }
 
-/* FINISHED */
+/* CLOSED */
 .past-card{
   opacity:.5;
 }
@@ -184,14 +188,6 @@ body{
   padding:8px 24px;
   font-weight:600;
 }
-.btn-disabled{
-  background:#444;
-  color:#aaa;
-  border:none;
-  border-radius:999px;
-  padding:8px 24px;
-  font-weight:600;
-}
 </style>
 </head>
 
@@ -201,83 +197,82 @@ body{
 
 <div class="container my-5">
 
-  <h2 class="page-title">Events</h2>
+<h2 class="page-title">Events</h2>
 
-  <!-- FILTER -->
-  <div class="mb-4">
-    <a href="?filter=all" class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
-    <a href="?filter=not_joined" class="filter-btn <?= $filter==='not_joined'?'active':'' ?>">Not Joined</a>
-    <a href="?filter=joined" class="filter-btn <?= $filter==='joined'?'active':'' ?>">Joined</a>
-    <a href="?filter=finished" class="filter-btn <?= $filter==='finished'?'active':'' ?>">Finished</a>
-  </div>
+<!-- FILTER -->
+<div class="mb-4">
+<a href="?filter=all" class="filter-btn <?= $filter==='all'?'active':'' ?>">All</a>
+<a href="?filter=not_joined" class="filter-btn <?= $filter==='not_joined'?'active':'' ?>">Not Joined</a>
+<a href="?filter=joined" class="filter-btn <?= $filter==='joined'?'active':'' ?>">Joined</a>
+<a href="?filter=finished" class="filter-btn <?= $filter==='finished'?'active':'' ?>">Closed</a>
+</div>
 
 <?php while ($e = $events->fetch_assoc()): 
 
-    $isPast   = $e['event_date'] < $today;
-    $isJoined = $e['joined'] == 1;
+$isPast = ($e['status'] === 'closed') || ($e['event_date'] < $today);
+$isJoined = $e['joined'] == 1;
 
-    $cardClass = '';
-    if ($isPast) $cardClass = 'past-card';
-    elseif ($isJoined) $cardClass = 'joined-card';
+$cardClass = '';
+if ($isPast) $cardClass = 'past-card';
+elseif ($isJoined) $cardClass = 'joined-card';
 ?>
 
-  <div class="event-card p-4 mb-4 <?= $cardClass ?>">
+<div class="event-card p-4 mb-4 <?= $cardClass ?>">
 
-    <?php if ($isJoined && !$isPast): ?>
-      <div class="badge-status badge-joined">Joined</div>
-    <?php endif; ?>
+<?php if ($isJoined && !$isPast): ?>
+<div class="badge-status badge-joined">Joined</div>
+<?php endif; ?>
 
-    <?php if ($isPast): ?>
-      <div class="badge-status badge-finished">Finished</div>
-    <?php endif; ?>
+<?php if ($isPast): ?>
+<div class="badge-status badge-finished">Closed</div>
+<?php endif; ?>
 
-    <h4 class="event-title mb-2">
-      <?= htmlspecialchars($e['title']) ?>
-    </h4>
+<h4 class="event-title mb-2">
+<?= htmlspecialchars($e['title']) ?>
+</h4>
 
-    <div class="event-meta mb-2">
-      📅 <?= htmlspecialchars($e['event_date']) ?>
-      <?php if ($e['start_time'] && $e['end_time']): ?>
-        , <?= substr($e['start_time'],0,5) ?>–<?= substr($e['end_time'],0,5) ?>
-      <?php endif; ?>
-    </div>
+<div class="event-meta mb-2">
+📅 <?= htmlspecialchars($e['event_date']) ?>
+<?php if ($e['start_time'] && $e['end_time']): ?>
+, <?= substr($e['start_time'],0,5) ?>–<?= substr($e['end_time'],0,5) ?>
+<?php endif; ?>
+</div>
 
-    <?php if (!empty($e['location'])): ?>
-      <div class="event-meta mb-3">
-        📍 <?= htmlspecialchars($e['location']) ?>
-      </div>
-    <?php endif; ?>
+<?php if (!empty($e['location'])): ?>
+<div class="event-meta mb-3">
+📍 <?= htmlspecialchars($e['location']) ?>
+</div>
+<?php endif; ?>
 
-    <div class="d-flex justify-content-between align-items-center">
+<div class="d-flex justify-content-between align-items-center">
 
-      <?php if (!$isPast): ?>
-        <a href="event_detail.php?id=<?= $e['id'] ?>#members" 
-           class="event-link">
-           See who joined
-        </a>
-      <?php endif; ?>
+<?php if (!$isPast): ?>
+<a href="event_detail.php?id=<?= $e['id'] ?>#members" class="event-link">
+See who joined
+</a>
+<?php endif; ?>
 
-      <div>
-        <?php if ($isPast): ?>
-          <button class="btn-disabled" disabled>Closed</button>
+<div>
 
-        <?php elseif ($isJoined): ?>
-          <a href="?action=unjoin&event_id=<?= $e['id'] ?>" 
-             class="btn-unjoin">
-             Unjoin
-          </a>
+<?php if ($isJoined && !$isPast): ?>
 
-        <?php else: ?>
-          <a href="?action=join&event_id=<?= $e['id'] ?>" 
-             class="btn-join">
-             Join
-          </a>
-        <?php endif; ?>
-      </div>
+<a href="?action=unjoin&event_id=<?= $e['id'] ?>" class="btn-unjoin">
+Unjoin
+</a>
 
-    </div>
+<?php elseif (!$isJoined && !$isPast): ?>
 
-  </div>
+<a href="?action=join&event_id=<?= $e['id'] ?>" class="btn-join">
+Join
+</a>
+
+<?php endif; ?>
+
+</div>
+
+</div>
+
+</div>
 
 <?php endwhile; ?>
 
