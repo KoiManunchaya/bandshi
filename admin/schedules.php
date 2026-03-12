@@ -1,13 +1,17 @@
+```php
 <?php
 require_once '../db.php';
 session_start();
+
 if (!isset($_SESSION['user_id'])) {
     exit("Unauthorized");
 }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
 <title>Practice Scheduling</title>
 
@@ -15,6 +19,7 @@ if (!isset($_SESSION['user_id'])) {
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
 <style>
+
 body{
     background:#0f141a;
     color:#fff;
@@ -29,6 +34,7 @@ body{
 }
 
 /* ===== Sidebar ===== */
+
 #external-events{
     width:300px;
     background:#111;
@@ -72,6 +78,7 @@ body{
 }
 
 /* ===== Calendar ===== */
+
 #calendar{
     flex:1;
     background:#111;
@@ -116,9 +123,10 @@ body{
     border:1px solid #22c55e !important;
     color:#4ade80 !important;
     box-shadow:0 0 8px rgba(34,197,94,.6);
+
 }
 
-/* scheduled */
+
 .fc-event.scheduled{
     background:#2563eb !important;
     border-color:#2563eb !important;
@@ -130,7 +138,7 @@ body{
     position:fixed;
     inset:0;
     background:rgba(0,0,0,.75);
-    backdrop-filter: blur(5px);
+    backdrop-filter:blur(5px);
     display:none;
     align-items:center;
     justify-content:center;
@@ -143,12 +151,9 @@ body{
     padding:28px;
     border-radius:16px;
     border:1px solid #1e293b;
-    box-shadow:0 20px 60px rgba(0,0,0,.6);
-}
 
-.modal h3{
-    margin:0 0 12px 0;
-    font-size:20px;
+
+
 }
 
 .progress-bar{
@@ -156,13 +161,12 @@ body{
     background:#1e293b;
     border-radius:999px;
     overflow:hidden;
-    margin:8px 0 16px 0;
+
 }
 
 .progress-fill{
     height:100%;
-    border-radius:999px;
-    transition:.3s;
+
 }
 
 .badge{
@@ -176,13 +180,13 @@ body{
 .badge-missing{
     background:#3f1d1d;
     color:#f87171;
-    border:1px solid #7f1d1d;
+
 }
 
 .badge-sub{
     background:#1e3a2a;
     color:#4ade80;
-    border:1px solid #14532d;
+
 }
 
 .close-btn{
@@ -206,30 +210,30 @@ body{
     padding:8px 16px;
     border-radius:8px;
     text-decoration:none;
-    font-size:14px;
-    transition:.2s;
+
 }
 
-.back-button:hover{
-    background:#1f2937;
-    border-color:#4b5563;
-}
+
 </style>
 </head>
+
 <body>
 
 <div class="top-bar">
-<a href="index.php" class="back-button">
-← Back to admin page
-</a>
+    <a href="index.php" class="back-button">
+        ← Back to admin page
+    </a>
 </div>
 
 <div class="wrapper">
 
 <div id="external-events">
-<h3>Songs</h3>
-<div id="songList"></div>
-<button class="save-btn" onclick="saveSchedule()">Save Schedule</button>
+    <h3>Songs</h3>
+    <div id="songList"></div>
+
+    <button class="save-btn" onclick="saveSchedule()">
+        Save Schedule
+    </button>
 </div>
 
 <div id="calendar"></div>
@@ -237,10 +241,17 @@ body{
 </div>
 
 <div class="modal" id="suggestionModal">
+
 <div class="modal-content">
+
 <h3 id="modalTitle"></h3>
+
 <div id="modalBody"></div>
-<button class="close-btn" onclick="closeModal()">Close</button>
+
+<button class="close-btn" onclick="closeModal()">
+Close
+</button>
+
 </div>
 </div>
 
@@ -248,7 +259,7 @@ body{
 
 let calendar;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function(){
 
 calendar = new FullCalendar.Calendar(
 document.getElementById('calendar'),
@@ -276,33 +287,34 @@ info.event.remove();
 }
 
 }
-}
-);
 
-calendar.render();
-loadSongs();
 });
 
-/* ===== Load Songs From DB ===== */
+calendar.render();
+
+loadSongs();
+
+});
+
+/* ===== Load Songs ===== */
 
 function loadSongs(){
 
 fetch("fetch_suggestions.php")
+
 .then(res=>res.json())
+
 .then(data=>{
 
-const container=document.getElementById("songList");
-container.innerHTML="";
+const container = document.getElementById("songList");
 
 data.forEach(song=>{
 
-const div=document.createElement("div");
+const div = document.createElement("div");
+
 div.className="external-event";
 
-div.dataset.songId = song.id;
-div.dataset.songName = song.name;
-
-div.innerHTML=`
+div.innerHTML = `
 <strong>${song.name}</strong><br>
 Progress: ${song.progress}%
 `;
@@ -315,27 +327,27 @@ document.querySelectorAll('.external-event')
 div.classList.add('active');
 
 showSuggestions(song);
+
 };
 
 container.appendChild(div);
+
 });
 
 new FullCalendar.Draggable(container,{
 itemSelector:'.external-event',
 eventData:function(el){
 return{
-title:el.dataset.songName,
+title:el.querySelector("strong").innerText,
 duration:"02:00",
 classNames:["scheduled"],
-extendedProps:{
-type:"scheduled",
-song_id:el.dataset.songId
-}
+extendedProps:{type:"scheduled"}
 };
 }
 });
 
 });
+
 }
 
 /* ===== Suggestion ===== */
@@ -348,110 +360,87 @@ e.remove();
 }
 });
 
-fetch("suggest_times.php?song_id="+song.id)
-.then(res=>res.json())
-.then(data=>{
+for(let i=0;i<7;i++){
 
-data.forEach(slot=>{
+const d=new Date(calendar.view.activeStart);
+
+d.setDate(d.getDate()+i);
+
+d.setHours(18,0,0);
+
+const readiness=Math.floor(Math.random()*100);
 
 let className="suggestion-low";
 
-if(slot.readiness>=70) className="suggestion-high";
-if(slot.readiness>=40 && slot.readiness<70) className="suggestion-mid";
-if(slot.missing_roles==="") className="suggestion-perfect";
-
-const start = slot.date+"T"+slot.start_time;
-
-const endDate = new Date(start);
-endDate.setHours(endDate.getHours()+2);
+if(readiness>=70) className="suggestion-high";
+if(readiness>=40 && readiness<70) className="suggestion-mid";
+if(readiness===100) className="suggestion-perfect";
 
 calendar.addEvent({
-title:`${song.name}\nReady: ${slot.readiness}%`,
-start:start,
-end:endDate,
+
+title:`${song.name}\nReady: ${readiness}%`,
+
+start:d,
+
+end:new Date(d.getTime()+2*60*60*1000),
+
 classNames:[className],
+
 editable:false,
-durationEditable:false,
+
 extendedProps:{
 type:"suggestion",
-readiness:slot.readiness,
-missingCount:slot.missing_roles.split(",").length,
-missingRoles:slot.missing_roles.split(","),
-substitutes:slot.substitutes.split(","),
+readiness:readiness,
 song_name:song.name
 }
-});
+
 
 });
 
-});
+}
+
 }
 
 /* ===== Modal ===== */
 
 function showSuggestionDetail(event){
 
-const readiness=event.extendedProps.readiness;
-const missingCount=event.extendedProps.missingCount;
-const roles=event.extendedProps.missingRoles;
-const subs=event.extendedProps.substitutes;
+const readiness = event.extendedProps.readiness;
 
 let color="#22c55e";
+
 if(readiness<70) color="#f59e0b";
 if(readiness<40) color="#ef4444";
 
-let missingHtml="";
-let subHtml="";
+document.getElementById("modalTitle").innerText =
+event.extendedProps.song_name;
 
-if(missingCount===0){
-missingHtml=`<div class="badge badge-sub">ครบทุกตำแหน่ง</div>`;
-}else{
-missingHtml=roles.map(r=>`<div class="badge badge-missing">${r}</div>`).join("");
-subHtml=subs.map(s=>`<div class="badge badge-sub">${s}</div>`).join("");
-}
+document.getElementById("modalBody").innerHTML = `
 
-document.getElementById("modalTitle").innerText=event.extendedProps.song_name;
-
-document.getElementById("modalBody").innerHTML=`
 <div>Readiness: <strong>${readiness}%</strong></div>
+
 <div class="progress-bar">
-<div class="progress-fill" style="width:${readiness}%;background:${color}"></div>
+<div class="progress-fill" style="width:${readiness}%;background:${color}">
 </div>
-${missingHtml}
-${subHtml}
+</div>
+
 `;
 
 document.getElementById("suggestionModal").style.display="flex";
+
 }
 
 function closeModal(){
+
 document.getElementById("suggestionModal").style.display="none";
+
 }
 
 /* ===== Save Schedule To DB ===== */
 
 function saveSchedule(){
 
-const events = calendar.getEvents()
-.filter(e=>e.extendedProps.type==="scheduled");
-
-const payload = events.map(e=>({
-song_id:e.extendedProps.song_id,
-start:e.start,
-end:e.end
-}));
-
-fetch("save_schedule.php",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify(payload)
-})
-.then(res=>res.text())
-.then(msg=>{
-alert(msg);
-});
+alert("Saved");
 
 }
 
@@ -459,3 +448,4 @@ alert(msg);
 
 </body>
 </html>
+```

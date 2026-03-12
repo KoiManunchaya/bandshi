@@ -1,7 +1,7 @@
 
 <?php
 session_start();
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/db.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -10,88 +10,138 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 
+/* ===== QUERY USER SESSIONS ===== */
+
 $stmt = $conn->prepare("
-    SELECT ps.date, ps.time_slot, s.name
+    SELECT 
+        ps.date,
+        ps.time_slot,
+        s.name
     FROM practice_sessions ps
-    JOIN songs s ON ps.song_id = s.id
+    JOIN songs s 
+        ON ps.song_id = s.id
     JOIN practice_session_members psm 
         ON psm.practice_session_id = ps.id
     WHERE psm.user_id = ?
-    AND ps.date >= CURDATE()
     ORDER BY ps.date ASC, ps.time_slot ASC
 ");
-$stmt->bind_param("i",$userId);
+
+$stmt->bind_param("i", $userId);
 $stmt->execute();
+
 $result = $stmt->get_result();
 $sessions = $result->fetch_all(MYSQLI_ASSOC);
+
+/* ===== MOCK DATA IF EMPTY ===== */
+
+$usingMock = false;
+
+if (empty($sessions)) {
+
+    $usingMock = true;
+
+    $sessions = [
+        [
+            'date' => '2026-02-25',
+            'time_slot' => '17:00-18:00',
+            'name' => 'After the Love Has Gone'
+        ],
+        [
+            'date' => '2026-02-26',
+            'time_slot' => '19:00-20:00',
+            'name' => 'รักใคร'
+        ],
+        [
+            'date' => '2026-02-28',
+            'time_slot' => '13:00-16:00',
+            'name' => 'หนอนผีเสื้อ'
+        ]
+    ];
+}
 
 $totalSessions = count($sessions);
 
 /* ===== DAY COLOR MAP ===== */
-function dayColor($date){
+
+function dayColor($date)
+{
     $day = (int) date('w', strtotime($date));
 
-    return match($day){
-        1 => '#f4d35e', // Mon
-        2 => '#ff4fa3', // Tue
-        3 => '#4caf50', // Wed
-        4 => '#ff8c42', // Thu
-        5 => '#4da6ff', // Fri
-        6 => '#9b5de5', // Sat
-        0 => '#ff4d4d', // Sun
+    return match ($day) {
+        1 => '#f4d35e', // Monday
+        2 => '#ff4fa3', // Tuesday
+        3 => '#4caf50', // Wednesday
+        4 => '#ff8c42', // Thursday
+        5 => '#4da6ff', // Friday
+        6 => '#9b5de5', // Saturday
+        0 => '#ff4d4d', // Sunday
         default => '#999999'
     };
 }
 ?>
+
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta charset="UTF-8">
+
 <title>Your Rehearsal Schedule</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
+
 body{
-  margin:0;
-  padding-top:64px;
-  background:#111;
-  color:#fff;
+    margin:0;
+    padding-top:64px;
+    background:#111;
+    color:#fff;
 }
 
 .card-dark{
-  background:#1c1c1c;
-  border-radius:16px;
+    background:#1c1c1c;
+    border-radius:16px;
 }
 
 .table-dark{
-  --bs-table-bg:#1c1c1c;
-  --bs-table-color:#ffffff;
+    --bs-table-bg:#1c1c1c;
+    --bs-table-color:#ffffff;
 }
 
 .summary-box{
-  background:#1c1c1c;
-  border-radius:12px;
+    background:#1c1c1c;
+    border-radius:12px;
+}
+
+.mock-label{
+    font-size:13px;
+    color:#999;
 }
 
 .day-divider{
-  border-top:2px solid #333;
+    border-top:2px solid #333;
 }
 
 .day-badge{
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:600;
-  color:#000;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    color:#000;
 }
 
 .time-badge{
-  padding:6px 14px;
-  border-radius:20px;
-  font-weight:600;
+    padding:6px 14px;
+    border-radius:20px;
+    font-weight:600;
 }
+
 </style>
+
 </head>
+
 <body>
 
 <?php include 'header.php'; ?>
@@ -100,14 +150,30 @@ body{
 
 <h2 class="mb-4">Your Rehearsal Schedule</h2>
 
+<!-- ===== SUMMARY ===== -->
+
 <div class="summary-box p-3 mb-4">
+
 <strong>This Week Summary</strong><br>
+
 Total Rehearsals: <?= $totalSessions ?> sessions
+
+<?php if ($usingMock): ?>
+
+<div class="mock-label mt-1">
+(Preview data — no real sessions yet)
 </div>
+
+<?php endif; ?>
+
+</div>
+
+<!-- ===== TABLE ===== -->
 
 <div class="card card-dark p-4">
 
 <table class="table table-dark align-middle mb-0">
+
 <thead>
 <tr>
 <th style="width:240px;">Date</th>
@@ -115,64 +181,81 @@ Total Rehearsals: <?= $totalSessions ?> sessions
 <th>Song</th>
 </tr>
 </thead>
+
 <tbody>
 
-<?php 
+<?php
 $prevDate = null;
 
-if(empty($sessions)){
-?>
-<tr>
-<td colspan="3" class="text-center py-5 text-secondary">
-No rehearsal sessions scheduled yet.
-</td>
-</tr>
-<?php
-}
+foreach ($sessions as $s):
 
-foreach ($sessions as $s): 
-    $currentDate = $s['date'];
-    $color = dayColor($currentDate);
-    $dayText = date('D', strtotime($currentDate));
+$currentDate = $s['date'];
 
-    if ($prevDate !== $currentDate):
+$color = dayColor($currentDate);
+
+$dayText = date('D', strtotime($currentDate));
+
+if ($prevDate !== $currentDate):
 ?>
+
 <tr class="day-divider">
+
 <td colspan="3" class="py-2">
+
 <span class="day-badge" style="background:<?= $color ?>">
+
 <?= $dayText ?>
+
 </span>
+
 <strong class="ms-2">
 <?= date('d M Y', strtotime($currentDate)) ?>
 </strong>
+
 </td>
+
 </tr>
+
 <?php endif; ?>
 
 <tr>
+
 <td></td>
+
 <td>
+
 <span class="time-badge"
-      style="background: <?= $color ?>30;
-             border:1px solid <?= $color ?>;
-             color:#ffffff;">
-    <?= htmlspecialchars($s['time_slot']) ?>
+style="
+background: <?= $color ?>30;
+border:1px solid <?= $color ?>;
+color:#ffffff;
+">
+
+<?= htmlspecialchars($s['time_slot']) ?>
+
 </span>
+
 </td>
+
 <td>
+
 <strong><?= htmlspecialchars($s['name']) ?></strong>
+
 </td>
+
 </tr>
 
-<?php 
+<?php
 $prevDate = $currentDate;
-endforeach; 
+endforeach;
 ?>
 
 </tbody>
+
 </table>
 
 </div>
+
 </div>
 
 </body>
