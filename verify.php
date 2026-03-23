@@ -1,31 +1,40 @@
 <?php
 require_once 'db.php';
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 if (!isset($_GET['token'])) {
-    die("No token provided.");
+    die("Invalid verification link.");
 }
 
 $token = $_GET['token'];
 
-echo "Token received: " . htmlspecialchars($token) . "<br><br>";
+/* ===== หา user ===== */
 
-$stmt = $conn->prepare("SELECT id FROM users WHERE verify_token = ?");
+$stmt = $conn->prepare("SELECT id,email_verified FROM users WHERE verify_token = ?");
 $stmt->bind_param("s", $token);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
+/* ===== token ไม่ถูก ===== */
+
 if (!$user) {
-    die("Token not found in database.");
+    die("Invalid or expired verification link.");
 }
 
-echo "User found. Updating...<br>";
+/* ===== ถ้า verify แล้ว ===== */
+
+if ($user['email_verified'] == 1) {
+    header("Location: login.php?verified=1");
+    exit;
+}
+
+/* ===== update verify ===== */
 
 $update = $conn->prepare("UPDATE users SET email_verified = 1, verify_token = NULL WHERE id = ?");
 $update->bind_param("i", $user['id']);
 $update->execute();
 
-echo "Update done. Email verified = 1";
+/* ===== redirect ===== */
+
+header("Location: verify_success.php");
+exit;

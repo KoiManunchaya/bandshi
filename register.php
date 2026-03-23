@@ -91,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($stmt->execute()) {
 
-                header("Location: login.php?registered=1");
-                exit;
+              header("Location: verify_notice.php?email=".$email);
+exit;
 
             } else {
                 $error = "Database insert failed.";
@@ -142,6 +142,40 @@ input[type="date"]::-webkit-calendar-picker-indicator {filter: invert(1);opacity
   color:#ff4d4f;
   margin-top:6px;
 }
+
+.email-input{
+  position:relative;
+}
+
+.email-input input{
+  padding-right:210px !important;
+}
+
+.email-domain{
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#888;
+  font-size:14px;
+  pointer-events:none;
+}
+
+.student-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.student-input{
+  width:50%;
+}
+
+.student-domain{
+  font-size:16px;
+  color:#ffffff;
+  font-weight:500;
+}
 </style>
 </head>
 <body>
@@ -167,18 +201,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {filter: invert(1);opacity
 <form method="post" id="registerForm">
 
 <!-- Student ID -->
+
 <div class="mb-3">
-<label>Student ID*</label>
+<label>Email Student*</label>
+
+<div class="student-row">
+
 <input id="student_id"
        name="student_id"
        value="<?= old('student_id') ?>"
-       class="form-control"
-       placeholder="Enter your 10-digit student ID"
+       class="form-control student-input"
+       placeholder="10-digit student ID"
+       maxlength="10"
+       inputmode="numeric"
        required>
+
+<span class="student-domain">@student.chula.ac.th</span>
+
+</div>
+
 <div class="error-text" id="studentError"></div>
-<small class="verify-text">
-Your verification email will be: studentID@student.chula.ac.th
-</small>
+
 </div>
 
 <!-- Password -->
@@ -211,12 +254,17 @@ Your verification email will be: studentID@student.chula.ac.th
 
 <!-- Thai full name -->
 <div class="mb-3">
-<label>Thai full name*</label>
-<input name="full_name"
+<label>Full name in Thai *</label>
+
+<input id="thai_name"
+       name="full_name"
        value="<?= old('full_name') ?>"
        class="form-control"
-       placeholder="Enter your full name"
+       placeholder="Enter your full name in Thai"
        required>
+
+<div class="error-text" id="thaiError"></div>
+
 </div>
 
 <!-- Gender -->
@@ -241,13 +289,16 @@ Your verification email will be: studentID@student.chula.ac.th
 
 <!-- Cohort -->
 <div class="mb-3">
-<label>Cohort*</label>
+<label>Generations*</label>
 <input name="cohort"
        value="<?= old('cohort') ?>"
        class="form-control"
-       placeholder="Enter your cohort"
+       placeholder="Enter your BANdSHIgen (e.g. 19, 20, 21)"
        required>
 </div>
+
+
+
 
 <!-- Part -->
 <div class="mb-3">
@@ -270,6 +321,7 @@ Your verification email will be: studentID@student.chula.ac.th
 <option value="keyboard" <?= selected('instrument','keyboard') ?>>Keyboard</option>
 <option value="bass" <?= selected('instrument','bass') ?>>Bass</option>
 <option value="drum" <?= selected('instrument','drum') ?>>Drum</option>
+<option value="etc" <?= selected('instrument','etc') ?>>Etc.</option>
 </select>
 </div>
 
@@ -286,22 +338,30 @@ document.addEventListener("DOMContentLoaded", function(){
   const student = document.getElementById("student_id");
   const password = document.getElementById("passwordInput");
   const display = document.getElementById("display_name");
+  const thaiName = document.getElementById("thai_name");
 
   /* Student ID */
   student.addEventListener("input", function(){
+
+    this.value = this.value.replace(/[^0-9]/g,"");
+
     const error = document.getElementById("studentError");
-    if(!/^[0-9]{10}$/.test(this.value.trim())){
+
+    if(!/^[0-9]{10}$/.test(this.value)){
       this.classList.add("is-invalid");
       error.textContent = "Student ID must be exactly 10 digits.";
     }else{
       this.classList.remove("is-invalid");
       error.textContent = "";
     }
+
   });
 
   /* Password */
   password.addEventListener("input", function(){
+
     const error = document.getElementById("passwordError");
+
     if(!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(this.value)){
       this.classList.add("is-invalid");
       error.textContent = "Minimum 8 characters, include letters and numbers.";
@@ -309,11 +369,14 @@ document.addEventListener("DOMContentLoaded", function(){
       this.classList.remove("is-invalid");
       error.textContent = "";
     }
+
   });
 
   /* Display name */
   display.addEventListener("input", function(){
+
     const error = document.getElementById("displayError");
+
     if(this.value.trim() === ""){
       this.classList.add("is-invalid");
       error.textContent = "Display name is required.";
@@ -321,10 +384,29 @@ document.addEventListener("DOMContentLoaded", function(){
       this.classList.remove("is-invalid");
       error.textContent = "";
     }
+
+  });
+
+  /* Thai name validation */
+  thaiName.addEventListener("input", function(){
+
+    const error = document.getElementById("thaiError");
+
+    const thaiRegex = /^[ก-๙\s]*$/;
+
+    if(!thaiRegex.test(this.value)){
+        this.classList.add("is-invalid");
+        error.textContent = "Full name must contain Thai characters only.";
+    }else{
+        this.classList.remove("is-invalid");
+        error.textContent = "";
+    }
+
   });
 
   /* Toggle password */
   document.getElementById("togglePassword").addEventListener("click", function(){
+
     if(password.type === "password"){
       password.type = "text";
       this.classList.replace("bi-eye","bi-eye-slash");
@@ -332,9 +414,11 @@ document.addEventListener("DOMContentLoaded", function(){
       password.type = "password";
       this.classList.replace("bi-eye-slash","bi-eye");
     }
+
   });
 
 });
+
 </script>
 
 </body>

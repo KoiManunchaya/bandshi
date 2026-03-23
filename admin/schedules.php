@@ -1,4 +1,4 @@
-```php
+
 <?php
 require_once '../db.php';
 session_start();
@@ -448,4 +448,4 @@ alert("Saved");
 
 </body>
 </html>
-```
+
