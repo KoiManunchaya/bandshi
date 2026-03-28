@@ -130,6 +130,10 @@ background:#555;
 color:#fff;
 }
 
+.form-label,
+label{
+    color:#ffffff !important;
+}
 </style>
 </head>
 
@@ -152,50 +156,60 @@ color:#fff;
 <form method="post" class="row g-3">
 
 <div class="col-12">
-<input
-class="form-control"
-name="title"
-placeholder="Event name"
-required
->
+    <label class="form-label">Title</label>
+    <input
+        class="form-control"
+        name="title"
+        placeholder="Event name"
+        required
+        value="<?= htmlspecialchars($_POST['title'] ?? '') ?>"
+    >
 </div>
 
 <div class="col-md-4">
-<input
-type="date"
-class="form-control"
-name="event_date"
-required
->
+    <label class="form-label">Date</label>
+    <input
+        type="date"
+        class="form-control"
+        name="event_date"
+        required
+        value="<?= htmlspecialchars($_POST['event_date'] ?? '') ?>"
+    >
 </div>
 
 <div class="col-md-4">
-<input
-type="time"
-class="form-control"
-name="start_time"
->
+    <label class="form-label">Start Time</label>
+    <input
+        type="time"
+        class="form-control"
+        name="start_time"
+        value="<?= htmlspecialchars($_POST['start_time'] ?? '') ?>"
+    >
 </div>
 
 <div class="col-md-4">
-<input
-type="time"
-class="form-control"
-name="end_time"
->
+    <label class="form-label">End Time</label>
+    <input
+        type="time"
+        class="form-control"
+        name="end_time"
+        value="<?= htmlspecialchars($_POST['end_time'] ?? '') ?>"
+    >
 </div>
 
 <div class="col-12">
-<input
-class="form-control"
-name="location"
-placeholder="Location"
-required
->
+    <label class="form-label">Location</label>
+    <input
+        class="form-control"
+        name="location"
+        placeholder="Location"
+        required
+        value="<?= htmlspecialchars($_POST['location'] ?? '') ?>"
+    >
 </div>
 
 <div class="col-12">
-<button class="btn btn-pink px-4">Save Event</button>
+    <button class="btn btn-pink px-4">Save Event</button>
 </div>
 
 </form>

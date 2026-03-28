@@ -126,43 +126,90 @@ $members = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-
 body{
-background:#1f232a;
-color:#ffffff;
+    background:#1f232a;
+    color:#ffffff;
 }
 
 h2,h5,p,li,label{
-color:#ffffff;
+    color:#ffffff;
 }
 
 .card-dark{
-background:#2b2f36;
-border-radius:16px;
+    background:#2b2f36;
+    border-radius:16px;
 }
 
 .alert-warning,
 .alert-success{
-background:#3a3f47;
-border:none;
-color:#ffffff;
+    background:#3a3f47;
+    border:none;
+    color:#ffffff;
 }
 
 ul{
-list-style:none;
-padding-left:0;
+    list-style:none;
+    padding-left:0;
 }
 
 li{
-padding:6px 0;
+    padding:6px 0;
 }
 
-.form-control{
-background:#1f232a;
-border:1px solid #444;
-color:#fff;
+/* form ทุกช่องเป็นพื้นขาว */
+.form-control,
+input[type="text"],
+input[type="date"],
+input[type="time"],
+textarea,
+select{
+    background:#ffffff !important;
+    border:1px solid #d0d5dd !important;
+    color:#111827 !important;
+    color-scheme:light;
 }
 
+/* placeholder */
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder{
+    color:#6b7280 !important;
+}
+
+/* ตัวหนังสือด้านใน date / time */
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="time"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field{
+    color:#111827 !important;
+}
+
+/* ไอคอนบนพื้นขาว */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator{
+    opacity:1 !important;
+    filter:none !important;
+    cursor:pointer;
+}
+
+/* focus */
+.form-control:focus,
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus{
+    background:#ffffff !important;
+    color:#111827 !important;
+    border-color:#9ca3af !important;
+    box-shadow:none !important;
+    outline:none !important;
+}
 </style>
 </head>
 
@@ -309,12 +356,6 @@ onclick="return confirm('Close joining for this event?')">
 Close Join
 </button>
 </form>
-
-<a
-href="admin_songs.php?event_id=<?= $event_id ?>"
-class="btn btn-success">
-Manage Songs
-</a>
 
 </div>
 

@@ -163,6 +163,16 @@ body{
     grid-template-columns:1fr;
   }
 }
+
+.empty-event{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:220px;
+  text-align:center;
+  font-size:18px;
+  color:#bbb;
+}
 </style>
 </head>
 
@@ -220,45 +230,48 @@ class="announcement-img">
 
 <h4 class="mb-4">Upcoming Events</h4>
 
-<div class="event-row">
+<?php if (!empty($events)): ?>
+  <div class="event-row">
 
-<?php foreach ($events as $e): ?>
+    <?php foreach ($events as $e): ?>
+      <div class="event-box">
 
-<div class="event-box">
+        <div>
+          <div class="event-title">
+            <?= htmlspecialchars($e['title']) ?>
+          </div>
 
-<div>
+          <div class="event-info">
+            📅 <?= date('d M Y', strtotime($e['event_date'])) ?>
+          </div>
 
-<div class="event-title">
-<?= htmlspecialchars($e['title']) ?>
-</div>
+          <?php if($e['start_time']): ?>
+            <div class="event-info">
+              ⏰ <?= date('H:i', strtotime($e['start_time'])) ?>
+            </div>
+          <?php endif; ?>
 
-<div class="event-info">
-📅 <?= date('d M Y', strtotime($e['event_date'])) ?>
-</div>
+          <?php if($e['location']): ?>
+            <div class="event-info">
+              📍 <?= htmlspecialchars($e['location']) ?>
+            </div>
+          <?php endif; ?>
+        </div>
 
-<?php if($e['start_time']): ?>
-<div class="event-info">
-⏰ <?= date('H:i', strtotime($e['start_time'])) ?>
-</div>
+        <a href="event_detail.php?id=<?= $e['id'] ?>">
+          <button class="view-btn">View Event</button>
+        </a>
+
+      </div>
+    <?php endforeach; ?>
+
+  </div>
+<?php else: ?>
+  <div class="card-dark empty-event">
+    No upcoming events at the moment
+  </div>
 <?php endif; ?>
 
-<?php if($e['location']): ?>
-<div class="event-info">
-📍 <?= htmlspecialchars($e['location']) ?>
-</div>
-<?php endif; ?>
-
-</div>
-
-<a href="event_detail.php?id=<?= $e['id'] ?>">
-<button class="view-btn">View Event</button>
-</a>
-
-</div>
-
-<?php endforeach; ?>
-
-</div>
 </div>
 
 </div>

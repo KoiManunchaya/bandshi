@@ -45,7 +45,6 @@ body {
    class="btn btn-sm btn-outline-danger">
    Logout
 </a>
-</div>
 
 <div class="container py-5">
 
@@ -56,7 +55,6 @@ body {
 
   <div class="row g-4">
 
-    <!-- EVENTS -->
     <div class="col-md-6 col-lg-4">
       <a href="admin_events.php" class="text-decoration-none text-white">
         <div class="card-admin">
@@ -66,7 +64,6 @@ body {
       </a>
     </div>
 
-    <!-- SONGS -->
     <div class="col-md-6 col-lg-4">
       <a href="admin_songs.php" class="text-decoration-none text-white">
         <div class="card-admin">
@@ -76,7 +73,6 @@ body {
       </a>
     </div>
 
-    <!-- ANNOUNCEMENTS -->
     <div class="col-md-6 col-lg-4">
       <a href="admin_announcements.php" class="text-decoration-none text-white">
         <div class="card-admin">
@@ -86,17 +82,24 @@ body {
       </a>
     </div>
 
-    <!-- SET SCHEDULE (OPTIONAL LINK) -->
     <div class="col-md-6 col-lg-4">
-  <a href="schedules.php" class="text-decoration-none text-white">
-    <div class="card-admin">
-      <h5>Set Schedule</h5>
-      <p>Review schedule suggestions and confirm practice sessions</p>
+      <a href="schedules.php" class="text-decoration-none text-white">
+        <div class="card-admin">
+          <h5>Set Schedule</h5>
+          <p>Review schedule suggestions and confirm practice sessions</p>
+        </div>
+      </a>
     </div>
-  </a>
-</div>
 
-    <!-- REPORT / DASHBOARD -->
+    <div class="col-md-6 col-lg-4">
+      <a href="admin_weekly_schedule.php" class="text-decoration-none text-white">
+        <div class="card-admin">
+          <h5>Weekly Schedule</h5>
+          <p>View saved schedules in table format with missing members</p>
+        </div>
+      </a>
+    </div>
+
     <div class="col-md-6 col-lg-4">
       <a href="dashboard.php" class="text-decoration-none text-white">
         <div class="card-admin">
